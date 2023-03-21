@@ -6,22 +6,29 @@ object Solution {
   type GrayscaleImage = List[List[Double]]
 
   // prerequisites
-//  def split(image_details: String):  = {
-//
-//  }
 
   def fromStringPPM(image: List[Char]): Int = {
     val image_without_p3 = image.drop(3)
-    val dimensions = image_without_p3.take(4)
-    val image_without_dimensions = image_without_p3.drop(4)
-    val only_pixels_img = image_without_dimensions.drop(4)
 
-    only_pixels_img match {
-      case Nil => ???
-    }
-    println(dimensions)
+    val dimensions = image_without_p3.take(3)
+
+    val image_without_dimensions = image_without_p3.drop(5)
+    val only_pixels_img = image_without_dimensions.drop(3)
+
+    //    def organizePixels(pixelImage: List[Char], acc: List[List[Pixel]]): Image = {
+    //      pixelImage match {
+    //        case Nil => ???
+    //        case x :: xs => if(x == ' ')
+    //      }
+    //    }
+
+    val (x, y) = only_pixels_img.splitAt(only_pixels_img.indexOf(' '))
+    println(x.mkString.toInt)
+    println(y)
+    //    println(dimensions)
     println(only_pixels_img)
 
+    //    organizePixels(only_pixels_img, Nil: List[Char])
     return 0
   }
 
