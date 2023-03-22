@@ -19,42 +19,64 @@ object Solution {
     val intLength = length.mkString.toInt
     val intHeight = height.drop(1).mkString.toInt
 
-        def organizePixels(pixelImage: List[Char], accRow: List[Pixel], acc: Image, length: Integer, height: Integer): Image = {
-          if(height == 0) {
-            acc.reverse
-          } else {
-            val (red, restList1) = pixelImage.splitAt(pixelImage.indexOf(' '))
-            val restList2 = restList1.drop(1)
-            val (green, restList3) = restList2.splitAt(restList2.indexOf(' '))
-            val restList4 = restList3.drop(1)
-            val (blue, restList5) = restList4.splitAt(restList4.indexOf('\n'))
+    def organizePixels(pixelImage: List[Char], accRow: List[Pixel], acc: Image, length: Integer, height: Integer): Image = {
+      if(height == 0) {
+        acc.reverse
+      } else {
+        val (red, restList1) = pixelImage.splitAt(pixelImage.indexOf(' '))
+        val restList2 = restList1.drop(1)
+        val (green, restList3) = restList2.splitAt(restList2.indexOf(' '))
+        val restList4 = restList3.drop(1)
+        val (blue, restList5) = restList4.splitAt(restList4.indexOf('\n'))
 
-            val new_pixel = Pixel(red.mkString.toInt, green.mkString.toInt, blue.mkString.toInt)
+        val new_pixel = Pixel(red.mkString.toInt, green.mkString.toInt, blue.mkString.toInt)
 
-            val auxAccRow = new_pixel :: accRow
+        val auxAccRow = new_pixel :: accRow
 
-            if (length - 1 == 0) {
-              organizePixels(restList5.drop(1), Nil, auxAccRow.reverse :: acc, intLength, height - 1)
-            } else {
-              organizePixels(restList5.drop(1), auxAccRow, acc, length - 1, height)
-            }
-          }
-
+        if (length - 1 == 0) {
+          organizePixels(restList5.drop(1), Nil, auxAccRow.reverse :: acc, intLength, height - 1)
+        } else {
+          organizePixels(restList5.drop(1), auxAccRow, acc, length - 1, height)
         }
+      }
+
+    }
 
     organizePixels(only_pixels_img, Nil, Nil, intLength, intHeight)
   }
 
-  def toStringPPM(image: Image): List[Char] = ???
+  def toStringPPM(image: Image): List[Char] = {
+    val height = image.length
+    val length = image.head.length
+
+    def decomposePixel(pixel: Pixel) = List(pixel.red.toString, " ", pixel.green.toString, " ", pixel.blue.toString, "\n").flatten
+    val header_image = List("P3\n", length.toString, " ", height.toString, "\n", 255.toString, "\n").flatten
+
+    val image_flattened = image.flatten.flatMap(pixel => decomposePixel(pixel))
+
+    val final_image = header_image ++ image_flattened
+
+    final_image
+  }
 
   // ex 1
-  def verticalConcat(image1: Image, image2: Image): Image = ???
+  def verticalConcat(image1: Image, image2: Image): Image = {
+    image1 ++ image2
+  }
 
   // ex 2
-  def horizontalConcat(image1: Image, image2: Image): Image = ???
+  def horizontalConcat(image1: Image, image2: Image): Image = {
+    val zipped_images = image1 zip image2
+
+    zipped_images.map(list_pair => list_pair._1 ++ list_pair._2)
+  }
 
   // ex 3
-  def rotate(image: Image, degrees: Integer): Image = ???
+  def rotate(image: Image, degrees: Integer): Image = {
+    degrees match
+    case 0 => image
+    case _ => rotate(image.transpose.reverse, degrees - 90)
+  }
 
   // ex 4
   val gaussianBlurKernel: GrayscaleImage = List[List[Double]](
