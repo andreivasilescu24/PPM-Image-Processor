@@ -7,29 +7,42 @@ object Solution {
 
   // prerequisites
 
-  def fromStringPPM(image: List[Char]): Int = {
+  def fromStringPPM(image: List[Char]): Image = {
     val image_without_p3 = image.drop(3)
 
     val dimensions = image_without_p3.take(3)
+    val (length, height) = dimensions.splitAt(dimensions.indexOf(' '))
 
     val image_without_dimensions = image_without_p3.drop(5)
     val only_pixels_img = image_without_dimensions.drop(3)
 
-    //    def organizePixels(pixelImage: List[Char], acc: List[List[Pixel]]): Image = {
-    //      pixelImage match {
-    //        case Nil => ???
-    //        case x :: xs => if(x == ' ')
-    //      }
-    //    }
+    val intLength = length.mkString.toInt
+    val intHeight = height.drop(1).mkString.toInt
 
-    val (x, y) = only_pixels_img.splitAt(only_pixels_img.indexOf(' '))
-    println(x.mkString.toInt)
-    println(y)
-    //    println(dimensions)
-    println(only_pixels_img)
+        def organizePixels(pixelImage: List[Char], accRow: List[Pixel], acc: Image, length: Integer, height: Integer): Image = {
+          if(height == 0) {
+            acc.reverse
+          } else {
+            val (red, restList1) = pixelImage.splitAt(pixelImage.indexOf(' '))
+            val restList2 = restList1.drop(1)
+            val (green, restList3) = restList2.splitAt(restList2.indexOf(' '))
+            val restList4 = restList3.drop(1)
+            val (blue, restList5) = restList4.splitAt(restList4.indexOf('\n'))
 
-    //    organizePixels(only_pixels_img, Nil: List[Char])
-    return 0
+            val new_pixel = Pixel(red.mkString.toInt, green.mkString.toInt, blue.mkString.toInt)
+
+            val auxAccRow = new_pixel :: accRow
+
+            if (length - 1 == 0) {
+              organizePixels(restList5.drop(1), Nil, auxAccRow.reverse :: acc, intLength, height - 1)
+            } else {
+              organizePixels(restList5.drop(1), auxAccRow, acc, length - 1, height)
+            }
+          }
+
+        }
+
+    organizePixels(only_pixels_img, Nil, Nil, intLength, intHeight)
   }
 
   def toStringPPM(image: Image): List[Char] = ???
