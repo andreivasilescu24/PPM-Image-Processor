@@ -1,4 +1,5 @@
 import util.Pixel
+import util.Util
 
 // Online viewer: https://0xc0de.fr/webppm/
 object Solution {
@@ -10,11 +11,11 @@ object Solution {
   def fromStringPPM(image: List[Char]): Image = {
     val image_without_p3 = image.drop(3)
 
-    val dimensions = image_without_p3.take(3)
+    val (dimensions, image_without_dimensions) = image_without_p3.splitAt(image_without_p3.indexOf('\n'))
+
     val (length, height) = dimensions.splitAt(dimensions.indexOf(' '))
 
-    val image_without_dimensions = image_without_p3.drop(5)
-    val only_pixels_img = image_without_dimensions.drop(3)
+    val only_pixels_img = image_without_dimensions.drop(5)
 
     val intLength = length.mkString.toInt
     val intHeight = height.drop(1).mkString.toInt
@@ -66,7 +67,7 @@ object Solution {
 
   // ex 2
   def horizontalConcat(image1: Image, image2: Image): Image = {
-    val zipped_images = image1 zip image2
+    val zipped_images = image1.zip(image2)
 
     zipped_images.map(list_pair => list_pair._1 ++ list_pair._2)
   }
@@ -99,10 +100,38 @@ object Solution {
     List(-1,-2,-1)
   )
 
-  def edgeDetection(image: Image, threshold : Double): Image = ???
+  def edgeDetection(image: Image, threshold : Double): Image = {
+    val grayscaledImage = image.map(row => row.map(pixel => Util.toGrayScale(pixel)))
 
-  def applyConvolution(image: GrayscaleImage, kernel: GrayscaleImage) : GrayscaleImage = ???
+    val convolutionWithKernel = applyConvolution(grayscaledImage, gaussianBlurKernel)
+
+    val Mx = applyConvolution(convolutionWithKernel, Gx)
+    val My = applyConvolution(convolutionWithKernel, Gy)
+
+    val combined_Ms = Mx.zip(My).map(list_pair => list_pair._1.zip(list_pair._2).map(element => element._1.abs + element._2.abs))
+
+    val final_image = combined_Ms.map(list => list.map(elem => if(elem < threshold) Pixel(0, 0, 0) else Pixel(255, 255, 255)))
+
+    final_image
+  }
+
+  def applyConvolution(image: GrayscaleImage, kernel: GrayscaleImage) : GrayscaleImage = {
+    def convolution(image_aux: GrayscaleImage, kernel_aux: GrayscaleImage) : Double = {
+      image_aux match
+      case Nil => 0
+      case x :: xs => x.zip(kernel_aux.head).foldLeft(0.0)((sum_elems, elem) => sum_elems + elem._1 * elem._2) + convolution(xs, kernel_aux.tail)
+    }
+
+    val neighbours = Util.getNeighbors(image, (kernel.length - 1) / 2)
+
+    val image_after_conv = neighbours.map(neighbours_list => neighbours_list.map(grayscaleImage => convolution(grayscaleImage, kernel)))
+
+    image_after_conv
+  }
 
   // ex 5
-  def moduloPascal(m: Integer, funct: Integer => Pixel, size: Integer): Image = ???
+  def moduloPascal(m: Integer, funct: Integer => Pixel, size: Integer): Image = {
+
+
+  }
 }
