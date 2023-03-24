@@ -131,29 +131,23 @@ object Solution {
   }
 
   // ex 5
-  def calcCmodulo(n: Integer, k: Integer, M: Integer): Integer = {
-    k match
-    case 0 => 1 % M
-    case 1 => n % M
-    case `n` => 1 % M
-    case _ => (calcCmodulo(n - 1, k, M) + calcCmodulo(n - 1, k - 1, M)) % M
-  }
-
-
   def moduloPascal(m: Integer, funct: Integer => Pixel, size: Integer): Image = {
-    def buildImage(image: Image, row: List[Pixel], n: Integer, k: Integer): Image = {
+    def buildImage(image_modulos: List[List[Integer]], row: List[Integer], n: Integer, k: Integer): List[List[Integer]] = {
       if (n == size)
-        image.reverse
+        image_modulos.reverse
       else {
         if (k == size)
-          buildImage(row.reverse :: image, Nil, n + 1, 0)
+          buildImage(row.reverse :: image_modulos, Nil, n + 1, 0)
+        else if(k == 0 || k == n)
+          buildImage(image_modulos, (1 % m) :: row, n, k + 1)
         else if(k > n)
-          buildImage(image, funct(-1) :: row, n, k + 1)
-        else buildImage(image, funct(calcCmodulo(n, k, m)) :: row, n, k + 1)
+          buildImage(image_modulos, (-1) :: row, n, k + 1)
+        else buildImage(image_modulos, ((image_modulos.head(k) + image_modulos.head(k - 1)) % m) :: row, n, k + 1)
       }
     }
 
-    buildImage(Nil, Nil, 0, 0)
+    val matrix_modulos = buildImage(Nil, Nil, 0, 0)
+    matrix_modulos.map(row_matrix => row_matrix.map(modulo => funct(modulo)))
   }
 
 }
