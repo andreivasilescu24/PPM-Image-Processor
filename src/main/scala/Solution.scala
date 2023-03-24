@@ -21,7 +21,7 @@ object Solution {
     val intHeight = height.drop(1).mkString.toInt
 
     def organizePixels(pixelImage: List[Char], accRow: List[Pixel], acc: Image, length: Integer, height: Integer): Image = {
-      if(height == 0) {
+      if (height == 0) {
         acc.reverse
       } else {
         val (red, restList1) = pixelImage.splitAt(pixelImage.indexOf(' '))
@@ -51,6 +51,7 @@ object Solution {
     val length = image.head.length
 
     def decomposePixel(pixel: Pixel) = List(pixel.red.toString, " ", pixel.green.toString, " ", pixel.blue.toString, "\n").flatten
+
     val header_image = List("P3\n", length.toString, " ", height.toString, "\n", 255.toString, "\n").flatten
 
     val image_flattened = image.flatten.flatMap(pixel => decomposePixel(pixel))
@@ -81,26 +82,26 @@ object Solution {
 
   // ex 4
   val gaussianBlurKernel: GrayscaleImage = List[List[Double]](
-    List( 1, 4, 7, 4, 1),
-    List( 4,16,26,16, 4),
-    List( 7,26,41,26, 7),
-    List( 4,16,26,16, 4),
-    List( 1, 4, 7, 4, 1)
+    List(1, 4, 7, 4, 1),
+    List(4, 16, 26, 16, 4),
+    List(7, 26, 41, 26, 7),
+    List(4, 16, 26, 16, 4),
+    List(1, 4, 7, 4, 1)
   ).map(_.map(_ / 273))
 
-  val Gx : GrayscaleImage = List(
+  val Gx: GrayscaleImage = List(
     List(-1, 0, 1),
     List(-2, 0, 2),
     List(-1, 0, 1)
   )
 
-  val Gy : GrayscaleImage = List(
-    List( 1, 2, 1),
-    List( 0, 0, 0),
-    List(-1,-2,-1)
+  val Gy: GrayscaleImage = List(
+    List(1, 2, 1),
+    List(0, 0, 0),
+    List(-1, -2, -1)
   )
 
-  def edgeDetection(image: Image, threshold : Double): Image = {
+  def edgeDetection(image: Image, threshold: Double): Image = {
     val grayscaledImage = image.map(row => row.map(pixel => Util.toGrayScale(pixel)))
 
     val convolutionWithKernel = applyConvolution(grayscaledImage, gaussianBlurKernel)
@@ -110,13 +111,13 @@ object Solution {
 
     val combined_Ms = Mx.zip(My).map(list_pair => list_pair._1.zip(list_pair._2).map(element => element._1.abs + element._2.abs))
 
-    val final_image = combined_Ms.map(list => list.map(elem => if(elem < threshold) Pixel(0, 0, 0) else Pixel(255, 255, 255)))
+    val final_image = combined_Ms.map(list => list.map(elem => if (elem < threshold) Pixel(0, 0, 0) else Pixel(255, 255, 255)))
 
     final_image
   }
 
-  def applyConvolution(image: GrayscaleImage, kernel: GrayscaleImage) : GrayscaleImage = {
-    def convolution(image_aux: GrayscaleImage, kernel_aux: GrayscaleImage) : Double = {
+  def applyConvolution(image: GrayscaleImage, kernel: GrayscaleImage): GrayscaleImage = {
+    def convolution(image_aux: GrayscaleImage, kernel_aux: GrayscaleImage): Double = {
       image_aux match
       case Nil => 0
       case x :: xs => x.zip(kernel_aux.head).foldLeft(0.0)((sum_elems, elem) => sum_elems + elem._1 * elem._2) + convolution(xs, kernel_aux.tail)
@@ -130,8 +131,29 @@ object Solution {
   }
 
   // ex 5
-  def moduloPascal(m: Integer, funct: Integer => Pixel, size: Integer): Image = {
-
-
+  def calcCmodulo(n: Integer, k: Integer, M: Integer): Integer = {
+    k match
+    case 0 => 1 % M
+    case 1 => n % M
+    case `n` => 1 % M
+    case _ => (calcCmodulo(n - 1, k, M) + calcCmodulo(n - 1, k - 1, M)) % M
   }
+
+
+  def moduloPascal(m: Integer, funct: Integer => Pixel, size: Integer): Image = {
+    def buildImage(image: Image, row: List[Pixel], n: Integer, k: Integer): Image = {
+      if (n == size)
+        image.reverse
+      else {
+        if (k == size)
+          buildImage(row.reverse :: image, Nil, n + 1, 0)
+        else if(k > n)
+          buildImage(image, funct(-1) :: row, n, k + 1)
+        else buildImage(image, funct(calcCmodulo(n, k, m)) :: row, n, k + 1)
+      }
+    }
+
+    buildImage(Nil, Nil, 0, 0)
+  }
+
 }
