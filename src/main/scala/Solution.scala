@@ -1,25 +1,25 @@
 import util.Pixel
 import util.Util
 
+import scala.annotation.tailrec
+
 // Online viewer: https://0xc0de.fr/webppm/
 object Solution {
   type Image = List[List[Pixel]]
   type GrayscaleImage = List[List[Double]]
 
   // prerequisites
-
   def fromStringPPM(image: List[Char]): Image = {
     val image_without_p3 = image.drop(3)
 
     val (dimensions, image_without_dimensions) = image_without_p3.splitAt(image_without_p3.indexOf('\n'))
-
     val (length, height) = dimensions.splitAt(dimensions.indexOf(' '))
-
     val only_pixels_img = image_without_dimensions.drop(5)
 
     val intLength = length.mkString.toInt
     val intHeight = height.drop(1).mkString.toInt
 
+    @tailrec
     def organizePixels(pixelImage: List[Char], accRow: List[Pixel], acc: Image, length: Integer, height: Integer): Image = {
       if (height == 0) {
         acc.reverse
@@ -32,15 +32,12 @@ object Solution {
 
         val new_pixel = Pixel(red.mkString.toInt, green.mkString.toInt, blue.mkString.toInt)
 
-        val auxAccRow = new_pixel :: accRow
-
         if (length - 1 == 0) {
-          organizePixels(restList5.drop(1), Nil, auxAccRow.reverse :: acc, intLength, height - 1)
+          organizePixels(restList5.drop(1), Nil, (new_pixel :: accRow).reverse :: acc, intLength, height - 1)
         } else {
-          organizePixels(restList5.drop(1), auxAccRow, acc, length - 1, height)
+          organizePixels(restList5.drop(1), new_pixel :: accRow, acc, length - 1, height)
         }
       }
-
     }
 
     organizePixels(only_pixels_img, Nil, Nil, intLength, intHeight)
@@ -54,9 +51,7 @@ object Solution {
 
     val header_image = List("P3\n", length.toString, " ", height.toString, "\n", 255.toString, "\n").flatten
 
-    val image_flattened = image.flatten.flatMap(pixel => decomposePixel(pixel))
-
-    val final_image = header_image ++ image_flattened
+    val final_image = header_image ++ image.flatten.flatMap(pixel => decomposePixel(pixel))
 
     final_image
   }
@@ -68,16 +63,18 @@ object Solution {
 
   // ex 2
   def horizontalConcat(image1: Image, image2: Image): Image = {
-    val zipped_images = image1.zip(image2)
+    val row_pairs_list = image1.zip(image2)
 
-    zipped_images.map(list_pair => list_pair._1 ++ list_pair._2)
+    row_pairs_list.map(list_pair => list_pair._1 ++ list_pair._2)
   }
 
   // ex 3
+  @tailrec
   def rotate(image: Image, degrees: Integer): Image = {
-    degrees match
-    case 0 => image
-    case _ => rotate(image.transpose.reverse, degrees - 90)
+    degrees match {
+      case 0 => image
+      case _ => rotate(image.transpose.reverse, degrees - 90)
+    }
   }
 
   // ex 4
@@ -109,45 +106,50 @@ object Solution {
     val Mx = applyConvolution(convolutionWithKernel, Gx)
     val My = applyConvolution(convolutionWithKernel, Gy)
 
-    val combined_Ms = Mx.zip(My).map(list_pair => list_pair._1.zip(list_pair._2).map(element => element._1.abs + element._2.abs))
+    val combined_Ms = Mx.zip(My).map(rows_pair => rows_pair._1.zip(rows_pair._2).map(elem_row => elem_row._1.abs + elem_row._2.abs))
 
-    val final_image = combined_Ms.map(list => list.map(elem => if (elem < threshold) Pixel(0, 0, 0) else Pixel(255, 255, 255)))
+    val final_image = combined_Ms.map(pixel_list => pixel_list.map(pixel => if (pixel < threshold) Pixel(0, 0, 0) else Pixel(255, 255, 255)))
 
     final_image
   }
 
   def applyConvolution(image: GrayscaleImage, kernel: GrayscaleImage): GrayscaleImage = {
-    def convolution(image_aux: GrayscaleImage, kernel_aux: GrayscaleImage): Double = {
-      image_aux match
-      case Nil => 0
-      case x :: xs => x.zip(kernel_aux.head).foldLeft(0.0)((sum_elems, elem) => sum_elems + elem._1 * elem._2) + convolution(xs, kernel_aux.tail)
-    }
+    val neighbours = Util.getNeighbors(image, kernel.length / 2)
 
-    val neighbours = Util.getNeighbors(image, (kernel.length - 1) / 2)
+    val image_after_convolution = neighbours.map(neighbours_list => neighbours_list.map(neighbour => neighbour.zip(kernel)
+      .map(rows_pair => rows_pair._1.zip(rows_pair._2).foldLeft(0.0)((acc_row, row_corresponding_elems) => acc_row + row_corresponding_elems._1 * row_corresponding_elems._2))
+      .foldLeft(0.0)((acc_convolution, row_convolution_result) => acc_convolution + row_convolution_result)))
 
-    val image_after_conv = neighbours.map(neighbours_list => neighbours_list.map(grayscaleImage => convolution(grayscaleImage, kernel)))
-
-    image_after_conv
+    image_after_convolution
   }
 
   // ex 5
   def moduloPascal(m: Integer, funct: Integer => Pixel, size: Integer): Image = {
+    @tailrec
     def buildImage(image_modulos: List[List[Integer]], row: List[Integer], n: Integer, k: Integer): List[List[Integer]] = {
-      if (n == size)
-        image_modulos.reverse
-      else {
-        if (k == size)
-          buildImage(row.reverse :: image_modulos, Nil, n + 1, 0)
-        else if(k == 0 || k == n)
-          buildImage(image_modulos, (1 % m) :: row, n, k + 1)
-        else if(k > n)
-          buildImage(image_modulos, (-1) :: row, n, k + 1)
-        else buildImage(image_modulos, ((image_modulos.head(k) + image_modulos.head(k - 1)) % m) :: row, n, k + 1)
+      n match {
+        case `size` => image_modulos.reverse
+        case _ => k match {
+          case `size` => buildImage(row.reverse :: image_modulos, Nil, n + 1, 0)
+          case 0 | `n` => buildImage(image_modulos, (1 % m) :: row, n, k + 1)
+          case value => if (value > n) buildImage(image_modulos, (-1) :: row, n, k + 1)
+          else buildImage(image_modulos, ((image_modulos.head.apply(k) + image_modulos.head.apply(k - 1)) % m) :: row, n, k + 1)
+        }
       }
+      //      if (n == size)
+      //        image_modulos.reverse
+      //      else {
+      //        if (k == size)
+      //          buildImage(row.reverse :: image_modulos, Nil, n + 1, 0)
+      //        else if(k == 0 || k == n)
+      //          buildImage(image_modulos, (1 % m) :: row, n, k + 1)
+      //        else if(k > n)
+      //          buildImage(image_modulos, (-1) :: row, n, k + 1)
+      //        else buildImage(image_modulos, ((image_modulos.head.apply(k) + image_modulos.head.apply(k - 1)) % m) :: row, n, k + 1)
+      //      }
     }
 
     val matrix_modulos = buildImage(Nil, Nil, 0, 0)
-    matrix_modulos.map(row_matrix => row_matrix.map(modulo => funct(modulo)))
+    matrix_modulos.map(row_matrix => row_matrix.map(modulo_result => funct(modulo_result)))
   }
-
 }
