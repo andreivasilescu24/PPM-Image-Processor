@@ -71,8 +71,9 @@ object Solution {
   // ex 3
   @tailrec
   def rotate(image: Image, degrees: Integer): Image = {
+    val zero: Integer = 0
     degrees match {
-      case 0 => image
+      case `zero` => image
       case _ => rotate(image.transpose.reverse, degrees - 90)
     }
   }
@@ -127,26 +128,28 @@ object Solution {
   def moduloPascal(m: Integer, funct: Integer => Pixel, size: Integer): Image = {
     @tailrec
     def buildImage(image_modulos: List[List[Integer]], row: List[Integer], n: Integer, k: Integer): List[List[Integer]] = {
+      val zero: Integer = 0
       n match {
         case `size` => image_modulos.reverse
         case _ => k match {
           case `size` => buildImage(row.reverse :: image_modulos, Nil, n + 1, 0)
-          case 0 | `n` => buildImage(image_modulos, (1 % m) :: row, n, k + 1)
+          case `zero` => buildImage(image_modulos, (1 % m) :: row, n, k + 1)
+          case `n` => buildImage(image_modulos, (1 % m) :: row, n, k + 1)
           case value => if (value > n) buildImage(image_modulos, (-1) :: row, n, k + 1)
           else buildImage(image_modulos, ((image_modulos.head.apply(k) + image_modulos.head.apply(k - 1)) % m) :: row, n, k + 1)
         }
       }
-      //      if (n == size)
-      //        image_modulos.reverse
-      //      else {
-      //        if (k == size)
-      //          buildImage(row.reverse :: image_modulos, Nil, n + 1, 0)
-      //        else if(k == 0 || k == n)
-      //          buildImage(image_modulos, (1 % m) :: row, n, k + 1)
-      //        else if(k > n)
-      //          buildImage(image_modulos, (-1) :: row, n, k + 1)
-      //        else buildImage(image_modulos, ((image_modulos.head.apply(k) + image_modulos.head.apply(k - 1)) % m) :: row, n, k + 1)
-      //      }
+//            if (n == size)
+//              image_modulos.reverse
+//            else {
+//              if (k == size)
+//                buildImage(row.reverse :: image_modulos, Nil, n + 1, 0)
+//              else if(k == 0 || k == n)
+//                buildImage(image_modulos, (1 % m) :: row, n, k + 1)
+//              else if(k > n)
+//                buildImage(image_modulos, (-1) :: row, n, k + 1)
+//              else buildImage(image_modulos, ((image_modulos.head.apply(k) + image_modulos.head.apply(k - 1)) % m) :: row, n, k + 1)
+//            }
     }
 
     val matrix_modulos = buildImage(Nil, Nil, 0, 0)
